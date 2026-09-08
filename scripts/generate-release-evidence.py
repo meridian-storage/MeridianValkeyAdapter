@@ -5,7 +5,9 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.metadata
 import json
+import platform
 import shutil
 import subprocess
 from pathlib import Path
@@ -38,11 +40,22 @@ def main() -> int:
     evidence = {
         "$comment": "SPDX-License-Identifier: Apache-2.0",
         "formatVersion": "meridian-valkey-release-evidence.v1",
-        "version": "1.0.0",
+        "version": "1.1.0",
         "sourceRevision": revision,
         "compatibilityDigest": digest(ROOT / "compatibility.json"),
         "conformanceVectorDigest": digest(ROOT / "evidence/conformance-vectors.json"),
         "artifacts": artifacts,
+        "validationEnvironment": {
+            "python": platform.python_version(),
+            "packages": {
+                name: importlib.metadata.version(name)
+                for name in ("meridian-storage-core", "meridian-storage-semantics", "valkey")
+            },
+            "engineImages": json.loads((ROOT / "compatibility.json").read_text())["engine"][
+                "images"
+            ],
+            "requirementsLockDigest": digest(ROOT / "requirements.lock"),
+        },
         "verification": {
             "unitContractConformance": "passed",
             "standalone": "passed",

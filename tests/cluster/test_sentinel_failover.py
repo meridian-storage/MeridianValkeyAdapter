@@ -14,6 +14,7 @@ from meridian_storage.semantics.catalogs import CacheCatalogProvider
 from meridian_storage.adapters.valkey import ValkeyAdapterFactory
 from tests.conftest import RESOURCE, execution_request, make_context, settings_mapping
 from tests.fakes import FakeValkey
+from tests.real_cache_contract import verify_real_cache_contract
 
 pytestmark = pytest.mark.cluster
 
@@ -36,7 +37,11 @@ def test_existing_runtime_recovers_after_sentinel_promotes_replica() -> None:
     settings = settings_mapping(sentinel=True)
     settings["seedEndpoints"] = endpoints[1:]
     context = make_context(
-        FakeValkey(), sentinel=True, settings_override=settings, endpoint=endpoints[0]
+        FakeValkey(),
+        sentinel=True,
+        settings_override=settings,
+        endpoint=endpoints[0],
+        engine_version=os.environ.get("MERIDIAN_VALKEY_VERSION", "8.1.9"),
     )
     ports = {"172.30.99.10": 6392, "172.30.99.11": 6393, "172.30.99.12": 6394}
 
@@ -48,6 +53,7 @@ def test_existing_runtime_recovers_after_sentinel_promotes_replica() -> None:
     runtime.open()
     try:
         assert runtime.probe().evidence["replicas"] == "2"
+        verify_real_cache_contract(runtime)
         session = runtime.open_session(transactional=False)
         initial = session.execute(
             execution_request(_operation("put", key="before-failover", value=1))
@@ -84,5 +90,6 @@ def test_existing_runtime_recovers_after_sentinel_promotes_replica() -> None:
             raise AssertionError("Sentinel did not restore a writable primary") from last_error
         hit = session.execute(execution_request(_operation("get", key="after-failover")))
         assert hit.data["entry"]["value"] == 2  # type: ignore[index]
+        verify_real_cache_contract(runtime)
     finally:
         runtime.close()

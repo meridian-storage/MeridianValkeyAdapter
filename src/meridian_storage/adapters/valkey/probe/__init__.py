@@ -11,10 +11,34 @@ from meridian_storage.semantics import JsonValue, sha256_fingerprint
 from meridian_storage.spi import AdapterProbe, PhysicalResource, PhysicalVerification
 
 from .._canonical import base64url_digest
-from ..atomic import CAS_SCRIPT_DIGEST, RELEASE_LEASE_SCRIPT_DIGEST
+from ..atomic import (
+    CAS_SCRIPT,
+    CAS_SCRIPT_DIGEST,
+    RELEASE_LEASE_SCRIPT,
+    RELEASE_LEASE_SCRIPT_DIGEST,
+)
 from ..client import ClientProtocol
 from ..configuration import ValkeySettings
-from ..descriptor import SUPPORTED_ENGINE_VERSIONS, capability_manifest
+from ..descriptor import capability_manifest
+
+REQUIRED_COMMANDS = (
+    "ping",
+    "info",
+    "config|get",
+    "get",
+    "mget",
+    "set",
+    "del",
+    "pttl",
+    "watch",
+    "unwatch",
+    "multi",
+    "exec",
+    "discard",
+    "script|load",
+    "script|exists",
+    "evalsha",
+)
 
 
 def _normalized_mapping(value: Mapping[object, object]) -> dict[str, object]:
@@ -65,10 +89,18 @@ def _number(value: object, field_name: str) -> int:
 
 
 class ValkeyProbe:
-    def __init__(self, client: ClientProtocol, settings: ValkeySettings, *, tls_mode: str) -> None:
+    def __init__(
+        self,
+        client: ClientProtocol,
+        settings: ValkeySettings,
+        *,
+        tls_mode: str,
+        selected_engine_version: str | None = None,
+    ) -> None:
         self._client = client
         self._settings = settings
         self._tls_mode = tls_mode
+        self._selected_engine_version = selected_engine_version
 
     def probe(self) -> AdapterProbe:
         if not self._client.ping():
@@ -81,11 +113,7 @@ class ValkeyProbe:
         engine_version = _text(
             server.get("valkey_version", server.get("redis_version")), "valkey_version"
         )
-        if engine_version not in SUPPORTED_ENGINE_VERSIONS:
-            raise CompatibilityError(
-                ErrorCode.CAPABILITY_UNSUPPORTED,
-                "probed Valkey version is not advertised by this Adapter release",
-            )
+        self._verify_commands()
         maxmemory = _number(memory.get("maxmemory", 0), "maxmemory")
         config = _normalized_mapping(self._client.config_get("maxmemory-policy"))
         eviction = _text(config.get("maxmemory-policy"), "maxmemory-policy")
@@ -122,12 +150,22 @@ class ValkeyProbe:
                 ErrorCode.CAPABILITY_UNSUPPORTED,
                 "Valkey replica count is below the selected topology requirement",
             )
+        for script, digest in (
+            (CAS_SCRIPT, CAS_SCRIPT_DIGEST),
+            (RELEASE_LEASE_SCRIPT, RELEASE_LEASE_SCRIPT_DIGEST),
+        ):
+            loaded = _text(self._client.script_load(script), "script_digest")
+            if loaded != digest.removeprefix("sha1:"):
+                raise CompatibilityError(
+                    ErrorCode.CAPABILITY_UNSUPPORTED,
+                    "Valkey script digest differs from owned script",
+                )
         script_shas = (
             CAS_SCRIPT_DIGEST.removeprefix("sha1:"),
             RELEASE_LEASE_SCRIPT_DIGEST.removeprefix("sha1:"),
         )
         script_presence = tuple(bool(item) for item in self._client.script_exists(*script_shas))
-        if len(script_presence) != 2:
+        if len(script_presence) != 2 or not all(script_presence):
             raise CompatibilityError(
                 ErrorCode.CAPABILITY_UNSUPPORTED,
                 "Valkey SCRIPT EXISTS response is malformed",
@@ -137,16 +175,39 @@ class ValkeyProbe:
             manifest,
             evidence={
                 "authentication": "verified",
+                "observedEngineVersion": engine_version,
+                "selectedEngineVersion": self._selected_engine_version or "unavailable",
+                "releaseConformance": "unverified-by-probe",
+                "commandSupport": "verified",
                 "evictionPolicy": eviction,
                 "maxmemoryBytes": str(maxmemory),
                 "persistence": "disabled" if appendonly in {"no", "0"} and not save else "enabled",
                 "replicas": str(replicas),
                 "role": role,
-                "scriptSupport": "verified",
+                "scriptSupport": "load-and-digest-verified",
                 "tlsMode": self._tls_mode,
                 "topology": self._settings.topology.mode,
             },
         )
+
+    def _verify_commands(self) -> None:
+        # A raw subcommand avoids client callbacks that assume every entry exists.
+        # COMMAND INFO reports null for an unavailable command; fail explicitly.
+        response = self._client.execute_command("COMMAND INFO", *REQUIRED_COMMANDS)
+        if not isinstance(response, (list, tuple)) or len(response) != len(REQUIRED_COMMANDS):
+            raise CompatibilityError(
+                ErrorCode.CAPABILITY_UNSUPPORTED, "Valkey COMMAND INFO response is malformed"
+            )
+        for command, entry in zip(REQUIRED_COMMANDS, response, strict=True):
+            if not isinstance(entry, (list, tuple)) or len(entry) < 2:
+                raise CompatibilityError(
+                    ErrorCode.CAPABILITY_UNSUPPORTED,
+                    f"Valkey required command {command} is missing",
+                )
+            if _text(entry[0], "command_name").lower() != command:
+                raise CompatibilityError(
+                    ErrorCode.CAPABILITY_UNSUPPORTED, "Valkey command protocol response differs"
+                )
 
     def verify_physical(self, resources: tuple[PhysicalResource, ...]) -> PhysicalVerification:
         if not resources:

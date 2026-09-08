@@ -1,7 +1,7 @@
 {
   "$comment": "SPDX-License-Identifier: Apache-2.0",
   "descriptor": {
-    "capabilityFingerprint": "sha256:c5453da3de99b7942c51ada33a87db8b3b09ca9ab4d4cd470bd620efe02d47dc",
+    "capabilityFingerprint": "sha256:2c62bf66661e76b16080d0ad04e890e8286dc65a66b4445ea0dfe3864dbfeddd",
     "engineVersion": "8.1.9",
     "operationContracts": [
       "meridian.cache.compare_and_set",
@@ -32,7 +32,7 @@
     "plain": "mrvk:v1:-4w7GB6VIxv8XlLk:g3:d:uwvR9ciRP-SkCNrRGh6Nf7d34g1rBgdrcxnRzAt-gsw"
   },
   "scripts": {
-    "compareAndSet": "sha1:dc3e0a72dc4d2ff0e209362fd16381ad7303d150",
-    "releaseLease": "sha1:af4f5da30cb9baa889aaa2022b6f84227f474d86"
+    "compareAndSet": "sha1:3c4e586aac59a7988a684447685a0e39b7a8071b",
+    "releaseLease": "sha1:445615c290ed4d257a24367e22249d63f37b4f76"
   }
 }

@@ -124,7 +124,9 @@ class FakeValkey:
 
     def execute_command(self, *args: object, **kwargs: object) -> object:
         self._check()
-        del args, kwargs
+        del kwargs
+        if args and args[0] == "COMMAND INFO":
+            return [[str(command).encode(), -1] for command in args[1:]]
         return b"OK"
 
     def script_load(self, script: bytes | str) -> str:

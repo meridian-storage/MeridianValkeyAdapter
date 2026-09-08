@@ -3,7 +3,7 @@
 # Architecture and authority boundary
 
 The package implements one adapter (`org.meridian.storage.valkey`) for one
-Meridian Catalog (`cache`). It consumes released Core/Semantics 1.0.0 artifacts
+Meridian Catalog (`cache`). It consumes released Core >=1.1.0,<2 and Semantics >=2.0.1,<3 artifacts
 and has no dependency on unreleased repository heads.
 
 ```text

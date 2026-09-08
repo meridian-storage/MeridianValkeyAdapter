@@ -16,18 +16,18 @@ from ..configuration import SERIALIZER_CANONICAL_JSON
 from ..key import require_shared_hash_slot
 
 CAS_SCRIPT = b"""-- meridian-storage-valkey cas v1
-local current = valkey.call('GET', KEYS[1])
+local current = redis.call('GET', KEYS[1])
 if not current then return -1 end
 if string.sub(current, 1, 6) ~= 'MRVK1|' then return -2 end
 if string.sub(current, 7, 77) ~= ARGV[1] then return 0 end
-valkey.call('SET', KEYS[1], ARGV[2], 'PX', ARGV[3])
+redis.call('SET', KEYS[1], ARGV[2], 'PX', ARGV[3])
 return 1
 """
 
 RELEASE_LEASE_SCRIPT = b"""-- meridian-storage-valkey release lease v1
-local current = valkey.call('GET', KEYS[1])
+local current = redis.call('GET', KEYS[1])
 if current and current == ARGV[1] then
-  return valkey.call('DEL', KEYS[1])
+  return redis.call('DEL', KEYS[1])
 end
 return 0
 """

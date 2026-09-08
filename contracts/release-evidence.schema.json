@@ -15,28 +15,86 @@
     "verification"
   ],
   "properties": {
-    "$comment": {"type": "string"},
-    "formatVersion": {"const": "meridian-valkey-release-evidence.v1"},
-    "version": {"type": "string"},
-    "sourceRevision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-    "compatibilityDigest": {"$ref": "#/$defs/fingerprint"},
-    "conformanceVectorDigest": {"$ref": "#/$defs/fingerprint"},
+    "$comment": {
+      "type": "string"
+    },
+    "formatVersion": {
+      "const": "meridian-valkey-release-evidence.v1"
+    },
+    "version": {
+      "type": "string"
+    },
+    "sourceRevision": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "compatibilityDigest": {
+      "$ref": "#/$defs/fingerprint"
+    },
+    "conformanceVectorDigest": {
+      "$ref": "#/$defs/fingerprint"
+    },
     "artifacts": {
       "type": "object",
       "minProperties": 2,
-      "additionalProperties": {"$ref": "#/$defs/fingerprint"}
+      "additionalProperties": {
+        "$ref": "#/$defs/fingerprint"
+      }
     },
     "verification": {
       "type": "object",
-      "required": ["unitContractConformance", "standalone", "sentinelFailover"],
+      "required": [
+        "unitContractConformance",
+        "standalone",
+        "sentinelFailover"
+      ],
       "properties": {
-        "unitContractConformance": {"const": "passed"},
-        "standalone": {"const": "passed"},
-        "sentinelFailover": {"const": "passed"}
+        "unitContractConformance": {
+          "const": "passed"
+        },
+        "standalone": {
+          "const": "passed"
+        },
+        "sentinelFailover": {
+          "const": "passed"
+        }
+      }
+    },
+    "validationEnvironment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "python",
+        "packages",
+        "engineImages",
+        "requirementsLockDigest"
+      ],
+      "properties": {
+        "python": {
+          "type": "string"
+        },
+        "packages": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "engineImages": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "requirementsLockDigest": {
+          "$ref": "#/$defs/fingerprint"
+        }
       }
     }
   },
   "$defs": {
-    "fingerprint": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+    "fingerprint": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    }
   }
 }
