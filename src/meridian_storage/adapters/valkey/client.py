@@ -14,6 +14,7 @@ from meridian_storage.spi import AdapterCreateContext
 from valkey import Valkey
 from valkey.sentinel import Sentinel
 
+from ._version import __version__
 from .configuration import TOPOLOGY_SENTINEL, ValkeySettings
 
 
@@ -214,7 +215,7 @@ def create_client_handle(
         # sends AUTH with check_health=False and preserves authenticated health
         # checks thereafter.
         "protocol": 2,
-        "client_name": "meridian-storage-valkey/1.0.0",
+        "client_name": f"meridian-storage-valkey/{__version__}",
     }
     if tls_required:
         if context.tls_ca is None or binding.tls.server_name is None:

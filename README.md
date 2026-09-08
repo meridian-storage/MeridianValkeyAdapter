@@ -15,27 +15,35 @@ streaming behavior and cannot be selected as their fallback.
 
 ## Compatibility
 
-| Component | Supported release |
+| Component | API bounds / verified recipe |
 | --- | --- |
 | Python | 3.12, 3.13, 3.14 |
-| `meridian-storage-core` | exactly 1.0.0 |
-| `meridian-storage-semantics` | exactly 1.0.0 |
-| `valkey` client | exactly 6.1.1 |
-| Valkey server | exactly 8.1.9 |
+| `meridian-storage-core` | >=1.1.0,<2 |
+| `meridian-storage-semantics` | >=2.0.1,<3 |
+| `valkey` client | >=6.1.1,<7 (verified: 6.1.1) |
+| Valkey server | deployment-selected; tested 8.1.9 and 8.1.8 |
 | Engine profiles | `valkey-standalone`, `valkey-sentinel` |
 
-The machine-readable pins and predecessor artifact digests are in
+The historical validation recipes and predecessor artifact digests are in
 [`compatibility.json`](compatibility.json). Install the published distribution
 with:
 
 ```console
-python -m pip install meridian-storage-valkey==1.0.0
+python -m pip install meridian-storage-valkey==1.1.0
 ```
 
 Meridian discovers `ValkeyAdapterFactory` through the
 `meridian_storage.adapters` entry-point group. Platform or Vangu composition
 owns the Binding, endpoint or service reference, credentials, ACLs, topology,
 memory policy, recovery, and namespace-generation rollout.
+
+Deployment selects exact package and image locks independently. Version tables
+are historical evidence, never startup allowlists. API bounds describe consumed
+Core SPI, Semantics Cache APIs and valkey-py client APIs; they do not promise
+conformance for every admitted release. Startup evidence records observed and
+selected releases separately and remains `unverified-by-probe`: real-engine
+tests establish the exact verified combinations. See the exhaustive
+[gate inventory](docs/release-validation.md).
 
 ## Advertised contract
 
@@ -120,7 +128,7 @@ as `{"mode":"sentinel","minimumReplicas":2,"sentinelMaster":"meridian-cache"}`.
   `NOSCRIPT`; consumer scripts and unbounded scans are rejected by design.
 - Multi-key atomic helpers require a shared Valkey hash slot. Public invalidation
   is a bounded sequence of independent exact-key deletes.
-- Startup verifies authentication, exact engine version, maxmemory, eviction,
+- Startup verifies authentication, required commands, selected engine release drift, maxmemory, eviction,
   persistence policy, primary role, replica count, and script permission.
 - Telemetry contains event names, counters, and hashed Resource identifiers;
   it never emits keys, values, endpoints, usernames, or credentials.
@@ -139,7 +147,7 @@ python -m venv .venv
 ./scripts/test-failover.sh
 ```
 
-The integration scripts use disposable Valkey 8.1.9 containers. They never
+The integration scripts use disposable Valkey 8.1.9 or 8.1.8 containers. They never
 provision production infrastructure. See [`CONTRIBUTING.md`](CONTRIBUTING.md)
 and [`SECURITY.md`](SECURITY.md) before submitting a change.
 

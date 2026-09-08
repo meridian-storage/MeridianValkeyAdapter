@@ -25,11 +25,23 @@ jobs:
           python-version: ${{ matrix.python }}
           cache: pip
       - run: python -m pip install --require-hashes -r requirements.lock
-      - run: python -m pip install --no-build-isolation --no-deps .
+      - run: python -m pip install --no-build-isolation .
+      - run: python -m pip check
       - run: ./scripts/verify.sh
 
   standalone:
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - version: "8.1.9"
+            image: valkey/valkey:8.1.9@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84
+          - version: "8.1.8"
+            image: valkey/valkey:8.1.8@sha256:3e31dd49b6b742e614975e8ab7b1b19809d00ecac7657c6b34bff23582a433cd
+    env:
+      MERIDIAN_VALKEY_VERSION: ${{ matrix.version }}
+      MERIDIAN_VALKEY_IMAGE: ${{ matrix.image }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -37,11 +49,22 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: python -m pip install --require-hashes -r requirements.lock
-      - run: python -m pip install --no-build-isolation --no-deps .
+      - run: python -m pip install --no-build-isolation .
       - run: ./scripts/test-integration.sh
 
   sentinel-failover:
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - version: "8.1.9"
+            image: valkey/valkey:8.1.9@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84
+          - version: "8.1.8"
+            image: valkey/valkey:8.1.8@sha256:3e31dd49b6b742e614975e8ab7b1b19809d00ecac7657c6b34bff23582a433cd
+    env:
+      MERIDIAN_VALKEY_VERSION: ${{ matrix.version }}
+      MERIDIAN_VALKEY_IMAGE: ${{ matrix.image }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -49,5 +72,5 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: python -m pip install --require-hashes -r requirements.lock
-      - run: python -m pip install --no-build-isolation --no-deps .
+      - run: python -m pip install --no-build-isolation .
       - run: ./scripts/test-failover.sh

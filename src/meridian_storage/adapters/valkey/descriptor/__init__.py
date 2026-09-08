@@ -17,6 +17,7 @@ ADAPTER_ID = "org.meridian.storage.valkey"
 ADAPTER_CONTRACT_VERSION = "1.0.0"
 ENGINE_PROFILE_STANDALONE = "valkey-standalone"
 ENGINE_PROFILE_SENTINEL = "valkey-sentinel"
+# Historical real-engine recipe only, never an acceptance allowlist.
 SUPPORTED_ENGINE_VERSION = "8.1.9"
 SUPPORTED_ENGINE_VERSIONS = (SUPPORTED_ENGINE_VERSION,)
 OPERATION_VERSION = "1.0.0"
@@ -60,6 +61,7 @@ def adapter_descriptor(settings: ValkeySettings) -> AdapterDescriptor:
         "health_probes": (
             "authenticated",
             "engine-version",
+            "required-commands",
             "eviction-policy",
             "memory-limit",
             "persistence-policy",
@@ -70,7 +72,7 @@ def adapter_descriptor(settings: ValkeySettings) -> AdapterDescriptor:
     return AdapterDescriptor(
         adapter_id=ADAPTER_ID,
         adapter_contract_version=ADAPTER_CONTRACT_VERSION,
-        driver="valkey-py/6.1",
+        driver="valkey-py",
         supported_engine_versions={
             ENGINE_PROFILE_STANDALONE: SUPPORTED_ENGINE_VERSIONS,
             ENGINE_PROFILE_SENTINEL: SUPPORTED_ENGINE_VERSIONS,

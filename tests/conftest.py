@@ -75,6 +75,7 @@ def make_context(
     sentinel: bool = False,
     settings_override: Mapping[str, JsonValue] | None = None,
     endpoint: str | None = None,
+    engine_version: str = SUPPORTED_ENGINE_VERSION,
 ) -> AdapterCreateContext:
     raw = dict(settings_override or settings_mapping(sentinel=sentinel))
     settings = ValkeySettings.from_mapping(cast(Mapping[str, object], raw))
@@ -85,7 +86,7 @@ def make_context(
             "adapterId": ADAPTER_ID,
             "adapterContract": "1.0.0",
             "engineProfile": profile,
-            "engineVersion": SUPPORTED_ENGINE_VERSION,
+            "engineVersion": engine_version,
             "endpoint": endpoint or "valkey://127.0.0.1:6379",
             "serviceRef": None,
             "physicalNamespace": "test-only-physical-namespace",
@@ -107,15 +108,15 @@ def make_context(
                 "iteratorLifetimeMs": 1000,
             },
             "requiredCapabilityFingerprint": expected_capability_fingerprint(
-                SUPPORTED_ENGINE_VERSION, settings
+                engine_version, settings
             ),
             "requiredPhysicalFingerprint": None,
             "compatibilityPins": {
                 "adapterContract": "1.0.0",
-                "coreVersion": "1.0.0",
-                "driver": "valkey-py/6.1",
+                "coreVersion": "1.1.0",
+                "driver": "valkey-py",
                 "engineProfile": profile,
-                "engineVersion": SUPPORTED_ENGINE_VERSION,
+                "engineVersion": engine_version,
             },
             "settings": raw,
             "extensions": {},

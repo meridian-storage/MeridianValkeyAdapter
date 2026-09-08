@@ -14,6 +14,7 @@ from meridian_storage.semantics.catalogs import CacheCatalogProvider
 from meridian_storage.adapters.valkey import ValkeyAdapterFactory
 from tests.conftest import RESOURCE, execution_request, make_context
 from tests.fakes import FakeValkey
+from tests.real_cache_contract import verify_real_cache_contract
 
 pytestmark = pytest.mark.integration
 
@@ -32,12 +33,17 @@ def test_real_standalone_contract_ttl_eviction_restart_profile() -> None:
     docker = shutil.which("docker")
     if docker is None:
         pytest.fail("docker is required for standalone restart conformance")
-    context = make_context(FakeValkey(), endpoint=endpoint)
+    context = make_context(
+        FakeValkey(),
+        endpoint=endpoint,
+        engine_version=os.environ.get("MERIDIAN_VALKEY_VERSION", "8.1.9"),
+    )
     runtime = ValkeyAdapterFactory().create(context)
     runtime.open()
     try:
+        verify_real_cache_contract(runtime)
         probe = runtime.probe()
-        assert probe.manifest.engine_version == "8.1.9"
+        assert probe.manifest.engine_version == os.environ.get("MERIDIAN_VALKEY_VERSION", "8.1.9")
         assert probe.evidence["persistence"] == "disabled"
         assert probe.evidence["evictionPolicy"] == "allkeys-lru"
         session = runtime.open_session(transactional=False)
@@ -97,6 +103,7 @@ def test_real_standalone_contract_ttl_eviction_restart_profile() -> None:
         deadline = time.monotonic() + 15
         while time.monotonic() < deadline:
             try:
+                assert runtime.cache.client.ping()
                 restarted = runtime.cache.lookup(cache_context, resource, "before-restart")
                 break
             except Exception:

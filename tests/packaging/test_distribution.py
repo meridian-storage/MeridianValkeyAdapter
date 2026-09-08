@@ -17,14 +17,14 @@ DIST = ROOT / "dist"
 
 
 def _wheel() -> Path:
-    matches = list(DIST.glob("meridian_storage_valkey-1.0.0-py3-none-any.whl"))
-    assert len(matches) == 1, "build the 1.0.0 wheel before packaging tests"
+    matches = list(DIST.glob("meridian_storage_valkey-1.1.0-py3-none-any.whl"))
+    assert len(matches) == 1, "build the 1.1.0 wheel before packaging tests"
     return matches[0]
 
 
 def _sdist() -> Path:
-    matches = list(DIST.glob("meridian_storage_valkey-1.0.0.tar.gz"))
-    assert len(matches) == 1, "build the 1.0.0 sdist before packaging tests"
+    matches = list(DIST.glob("meridian_storage_valkey-1.1.0.tar.gz"))
+    assert len(matches) == 1, "build the 1.1.0 sdist before packaging tests"
     return matches[0]
 
 
@@ -41,13 +41,13 @@ def test_wheel_has_one_namespace_package_and_required_material() -> None:
     assert any(name.endswith(".dist-info/licenses/LICENSE") for name in names)
     assert any(name.endswith(".dist-info/licenses/NOTICE") for name in names)
     assert metadata["Name"] == "meridian-storage-valkey"
-    assert metadata["Version"] == "1.0.0"
+    assert metadata["Version"] == "1.1.0"
     assert metadata["License-Expression"] == "Apache-2.0"
     requirements = metadata.get_all("Requires-Dist")
     assert requirements[:3] == [
-        "meridian-storage-core==1.0.0",
-        "meridian-storage-semantics==1.0.0",
-        "valkey==6.1.1",
+        "meridian-storage-core<2,>=1.1.0",
+        "meridian-storage-semantics<3,>=2.0.1",
+        "valkey<7,>=6.1.1",
     ]
 
 
@@ -68,14 +68,14 @@ def test_entry_point_and_packaged_contracts_are_exact() -> None:
         "valkey = meridian_storage.adapters.valkey:ValkeyAdapterFactory",
     ]
     assert compatibility["distribution"] == "meridian-storage-valkey"
-    assert compatibility["version"] == "1.0.0"
+    assert compatibility["version"] == "1.1.0"
     jsonschema.Draft202012Validator.check_schema(schema)
 
 
 def test_sdist_contains_tests_docs_lock_and_no_release_self_reference() -> None:
     with tarfile.open(_sdist(), "r:gz") as archive:
         names = set(archive.getnames())
-    prefix = "meridian_storage_valkey-1.0.0/"
+    prefix = "meridian_storage_valkey-1.1.0/"
     required = {
         "LICENSE",
         "NOTICE",

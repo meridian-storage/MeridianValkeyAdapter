@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Meridian Core 1.0.0 Adapter factory, runtime, and Cache session."""
+"""Meridian Core V1 SPI Adapter factory, runtime, and Cache session."""
 
 from __future__ import annotations
 
@@ -115,7 +115,12 @@ class ValkeyAdapterRuntime:
         self._context = context
         self._handle = handle
         self._settings = settings
-        self._probe = ValkeyProbe(handle.client, settings, tls_mode=context.binding.tls.mode)
+        self._probe = ValkeyProbe(
+            handle.client,
+            settings,
+            tls_mode=context.binding.tls.mode,
+            selected_engine_version=context.binding.engine_version,
+        )
         encoder = KeyEncoder(
             context.binding.physical_namespace,
             settings.namespace_generation,
